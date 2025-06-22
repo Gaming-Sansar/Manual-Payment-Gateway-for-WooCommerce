@@ -3,7 +3,7 @@
  * Plugin Name: Manual Payment Gateway for WooCommerce
  * Plugin URI: https://github.com/gamingsansar/manual-payment-gateway
  * Description: A manual payment gateway for WooCommerce with file upload and QR code support
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Gaming Sansar
  * Author URI: https://gamingsansar.com
  * License: GPL v2 or later
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 // Define plugin constants
 define('MPG_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MPG_PLUGIN_PATH', plugin_dir_path(__FILE__));
-define('MPG_PLUGIN_VERSION', '1.0.0');
+define('MPG_PLUGIN_VERSION', '1.1.0');
 
 // Check if WooCommerce is active
 if (!in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')))) {

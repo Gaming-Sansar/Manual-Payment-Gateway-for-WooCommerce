@@ -33,6 +33,13 @@ The Manual Payment Gateway plugin provides a seamless way for customers to submi
 - Order status management
 - Admin meta box on order edit pages
 
+✅ **Automatic Order Status Synchronization**
+- Auto-sync WooCommerce order status with payment approvals
+- Approved payments automatically change order status to "Processing"
+- Rejected payments automatically change order status to "Cancelled"
+- Enable/disable toggle with granular control
+- Real-time status notifications in admin panel
+
 ✅ **User Experience**
 - Responsive design for all devices
 - Progress indicators during upload
@@ -59,6 +66,7 @@ The Manual Payment Gateway plugin provides a seamless way for customers to submi
    - **Instructions**: Text shown on thank you page and emails
    - **QR Code**: Upload payment QR code for customers
    - **Maximum Files**: Set upload limit (1-5 files)
+   - **Auto-Sync Order Status**: Enable/disable automatic order status updates
 
 ### QR Code Setup
 1. Click "Select QR Code" button in settings
@@ -69,6 +77,12 @@ The Manual Payment Gateway plugin provides a seamless way for customers to submi
 - **File Types**: Images only (JPEG, PNG, GIF, WebP)
 - **File Size**: 5MB maximum per file
 - **Upload Count**: Configurable 1-5 files per order
+
+### Order Status Synchronization
+- **Default**: Enabled by default for seamless workflow
+- **When Enabled**: Approved payments automatically change order status to "Processing", rejected payments to "Cancelled"
+- **When Disabled**: Order status remains "On Hold" for manual management
+- **Safety**: Only affects orders created with manual payment gateway and currently in "On Hold" status
 
 ## Usage
 
@@ -83,7 +97,26 @@ The Manual Payment Gateway plugin provides a seamless way for customers to submi
 1. View payment logs at **WooCommerce > Payment Logs**
 2. Review uploaded screenshots and transaction details
 3. Update payment status (Pending/Approved/Rejected)
-4. Access payment details from order edit page
+4. **Automatic Order Processing**: When auto-sync is enabled, order status updates automatically
+5. Access payment details from order edit page with full order history
+
+## Workflow
+
+### Complete Payment Process
+1. **Customer Checkout**: Customer selects manual payment gateway
+2. **File Upload**: Customer uploads payment screenshot(s) and optional transaction ID
+3. **Order Creation**: Order is created with "On Hold" status
+4. **Admin Review**: Administrator reviews payment proof in Payment Logs
+5. **Status Update**: Administrator approves or rejects the payment
+6. **Auto-Sync** (if enabled): 
+   - ✅ **Approved** → Order status automatically changes to "Processing"
+   - ❌ **Rejected** → Order status automatically changes to "Cancelled"
+7. **Order Fulfillment**: Order proceeds through normal WooCommerce workflow
+
+### Manual Override
+- Auto-sync can be disabled in gateway settings
+- When disabled, order status remains "On Hold" for manual management
+- Administrators can still change order status manually in WooCommerce orders
 
 ## Technical Details
 
@@ -96,6 +129,7 @@ The Manual Payment Gateway plugin provides a seamless way for customers to submi
 - Creates wp_mpg_payment_logs table for tracking
 - Stores order metadata for payment details
 - Maintains audit trail of all submissions
+- Tracks payment status changes and order synchronization
 
 ### Security Features
 - Nonce verification for all AJAX requests
@@ -116,6 +150,15 @@ The Manual Payment Gateway plugin provides a seamless way for customers to submi
 - Plugin development and WordPress solutions
 
 ## Changelog
+
+### Version 1.1.0
+- **NEW**: Automatic Order Status Synchronization
+- **NEW**: Enable/disable toggle for auto-sync functionality (enabled by default)
+- **ENHANCEMENT**: Enhanced admin panel with real-time sync status notifications
+- **ENHANCEMENT**: Improved payment logs interface with order status column
+- **ENHANCEMENT**: Smart color-coded status indicators
+- **ENHANCEMENT**: Detailed order notes for payment approval/rejection tracking
+- **IMPROVEMENT**: Enhanced user experience with contextual success/warning messages
 
 ### Version 1.0.0
 - Initial release

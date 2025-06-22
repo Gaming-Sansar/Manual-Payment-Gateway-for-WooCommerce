@@ -31,6 +31,7 @@ class MPG_Gateway extends WC_Payment_Gateway {
         $this->qr_code = $this->get_option('qr_code');
         $this->max_files = $this->get_option('max_files', 1);
         $this->enabled = $this->get_option('enabled');
+        $this->auto_sync_order_status = $this->get_option('auto_sync_order_status', 'yes');
         
         // Actions
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
@@ -85,6 +86,14 @@ class MPG_Gateway extends WC_Payment_Gateway {
                     'min' => 1,
                     'max' => 5
                 ),
+                'desc_tip' => true,
+            ),
+            'auto_sync_order_status' => array(
+                'title' => __('Auto-Sync Order Status', 'manual-payment-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Automatically change WooCommerce order status when payment is approved/rejected', 'manual-payment-gateway'),
+                'description' => __('When enabled: Approved payments change order status to "Processing", Rejected payments change order status to "Cancelled". When disabled: Order status remains "On Hold" and must be changed manually.', 'manual-payment-gateway'),
+                'default' => 'yes',
                 'desc_tip' => true,
             )
         );
@@ -224,5 +233,12 @@ class MPG_Gateway extends WC_Payment_Gateway {
         if ($this->instructions) {
             echo wpautop(wptexturize(wp_kses_post($this->instructions)));
         }
+    }
+    
+    /**
+     * Check if auto-sync order status is enabled
+     */
+    public function is_auto_sync_enabled() {
+        return $this->auto_sync_order_status === 'yes';
     }
 }
