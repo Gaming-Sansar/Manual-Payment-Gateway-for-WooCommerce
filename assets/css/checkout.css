@@ -1,0 +1,175 @@
+/* Manual Payment Gateway Checkout Styles */
+
+.mpg-payment-fields {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 5px;
+}
+
+.mpg-qr-code {
+    text-align: center;
+    margin: 15px 0;
+    padding: 15px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.mpg-qr-code h4 {
+    margin-top: 0;
+    color: #333;
+}
+
+.mpg-file-upload-container {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.mpg-file-upload-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+.mpg-file-input {
+    width: 100%;
+    padding: 8px;
+    border: 2px dashed #ddd;
+    border-radius: 5px;
+    background: #fafafa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mpg-file-input:hover,
+.mpg-file-input:focus {
+    border-color: #007cba;
+    background: #f0f8ff;
+}
+
+.mpg-file-input.drag-over {
+    border-color: #00a32a;
+    background: #f0fff0;
+}
+
+.mpg-progress-container {
+    margin-top: 10px;
+}
+
+.mpg-progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.mpg-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #007cba, #00a32a);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.mpg-progress-text {
+    display: block;
+    text-align: center;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+}
+
+.mpg-file-preview {
+    margin-top: 15px;
+}
+
+.mpg-file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.mpg-file-item img {
+    max-width: 60px;
+    height: auto;
+    border-radius: 3px;
+}
+
+.mpg-file-item p {
+    margin: 0;
+    flex-grow: 1;
+    font-size: 14px;
+    color: #333;
+}
+
+.mpg-remove-file {
+    background: #dc3232;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.3s ease;
+}
+
+.mpg-remove-file:hover {
+    background: #a00;
+}
+
+.mpg-transaction-field {
+    margin-top: 20px;
+}
+
+.mpg-transaction-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+.mpg-transaction-field input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.mpg-transaction-field input:focus {
+    outline: none;
+    border-color: #007cba;
+    box-shadow: 0 0 5px rgba(0, 124, 186, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mpg-payment-fields {
+        padding: 10px;
+    }
+    
+    .mpg-file-upload-container {
+        padding: 10px;
+    }
+    
+    .mpg-file-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .mpg-file-item img {
+        max-width: 100px;
+    }
+}

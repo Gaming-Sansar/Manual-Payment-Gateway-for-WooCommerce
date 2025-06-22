@@ -1,0 +1,74 @@
+/* Manual Payment Gateway Admin Styles */
+
+.qr-code-preview {
+    margin-top: 10px;
+}
+
+.qr-code-preview img {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 5px;
+    background: white;
+}
+
+.mpg-upload-qr {
+    margin-left: 10px;
+}
+
+/* Payment logs page */
+.status-pending {
+    color: #ff9500;
+    font-weight: bold;
+}
+
+.status-approved {
+    color: #46b450;
+    font-weight: bold;
+}
+
+.status-rejected {
+    color: #dc3232;
+    font-weight: bold;
+}
+
+.mpg-order-details {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.mpg-uploaded-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.mpg-file-item {
+    text-align: center;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    background: white;
+    min-width: 150px;
+}
+
+.mpg-file-item img {
+    display: block;
+    margin: 0 auto 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.mpg-file-item img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.mpg-file-item p {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+    word-break: break-all;
+}
