@@ -31,6 +31,37 @@
     font-weight: bold;
 }
 
+/* Order status colors */
+.order-status-on-hold { 
+    color: #ff9500; 
+    font-weight: bold; 
+}
+
+.order-status-processing { 
+    color: #46b450; 
+    font-weight: bold; 
+}
+
+.order-status-completed { 
+    color: #46b450; 
+    font-weight: bold; 
+}
+
+.order-status-cancelled { 
+    color: #dc3232; 
+    font-weight: bold; 
+}
+
+.order-status-failed { 
+    color: #dc3232; 
+    font-weight: bold; 
+}
+
+.order-status-pending { 
+    color: #ff9500; 
+    font-weight: bold; 
+}
+
 .mpg-order-details {
     background: #f9f9f9;
     padding: 15px;
@@ -71,4 +102,210 @@
     font-size: 12px;
     color: #666;
     word-break: break-all;
+}
+
+/* Screen Options Styling */
+#screen-options-wrap fieldset {
+    border: none;
+    padding: 0;
+    margin: 15px 0;
+}
+
+#screen-options-wrap fieldset legend {
+    font-weight: bold;
+    margin-bottom: 10px;
+    padding: 0;
+}
+
+#screen-options-wrap fieldset label {
+    display: block;
+    margin: 5px 0;
+    font-size: 13px;
+}
+
+#screen-options-wrap fieldset input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+/* Table styling improvements */
+.mpg-table th {
+    font-weight: 600;
+    background-color: #f1f1f1;
+}
+
+.mpg-table td {
+    vertical-align: middle;
+}
+
+.mpg-table .mpg_id {
+    width: 50px;
+    text-align: center;
+}
+
+.mpg-table .mpg_order_id {
+    width: 80px;
+}
+
+.mpg-table .mpg_order_status {
+    width: 120px;
+}
+
+.mpg-table .mpg_transaction_id {
+    width: 120px;
+}
+
+.mpg-table .mpg_file {
+    width: 150px;
+}
+
+.mpg-table .mpg_user {
+    width: 120px;
+}
+
+.mpg-table .mpg_payment_status {
+    width: 100px;
+}
+
+.mpg-table .mpg_date {
+    width: 140px;
+}
+
+.mpg-table .mpg_actions {
+    width: 160px;
+}
+
+/* Table navigation styling */
+.tablenav {
+    clear: both;
+    margin: 0 0 10px;
+    padding: 8px 0;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    border-radius: 3px;
+}
+
+.tablenav.top {
+    margin-bottom: 15px;
+}
+
+.tablenav.bottom {
+    margin-top: 20px;
+    margin-bottom: 0;
+    border-top: 1px solid #ddd;
+    background: #fafafa;
+}
+
+.tablenav-pages {
+    float: right;
+    padding: 0 10px;
+    font-size: 13px;
+}
+
+.tablenav-pages .displaying-num {
+    margin-right: 15px;
+    color: #646970;
+    font-style: italic;
+}
+
+.tablenav-pages .pagination-links {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Per-page dropdown styling */
+#mpg-per-page {
+    margin: 0 8px;
+    padding: 2px 6px;
+    border: 1px solid #ccd0d4;
+    border-radius: 3px;
+    background: white;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+#mpg-per-page:focus {
+    border-color: #007cba;
+    box-shadow: 0 0 0 1px #007cba;
+    outline: none;
+}
+
+.pagination-links .page-numbers {
+    display: inline-block;
+    min-width: 17px;
+    padding: 3px 5px;
+    margin: 2px;
+    color: #0073aa;
+    border: 1px solid #ddd;
+    text-align: center;
+    text-decoration: none;
+    font-size: 13px;
+    line-height: 1.5;
+    border-radius: 2px;
+    background: white;
+}
+
+.pagination-links .page-numbers:hover {
+    background: #0073aa;
+    color: white;
+    border-color: #0073aa;
+}
+
+.pagination-links .page-numbers.current {
+    background: #0073aa;
+    color: white;
+    border-color: #0073aa;
+    font-weight: bold;
+}
+
+.pagination-links .page-numbers.prev,
+.pagination-links .page-numbers.next {
+    padding: 3px 8px;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 1200px) {
+    .mpg-table .mpg_transaction_id,
+    .mpg-table .mpg_order_status {
+        display: none;
+    }
+    
+    .tablenav-pages {
+        float: none;
+        text-align: center;
+        padding: 10px;
+    }
+    
+    .tablenav-pages .displaying-num {
+        display: block;
+        margin: 0 0 10px 0;
+    }
+}
+
+@media screen and (max-width: 900px) {
+    .mpg-table .mpg_file,
+    .mpg-table .mpg_user,
+    .mpg-table .mpg_date {
+        display: none;
+    }
+    
+    .pagination-links .page-numbers {
+        padding: 2px 4px;
+        margin: 1px;
+        font-size: 12px;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .tablenav {
+        padding: 5px;
+    }
+    
+    .tablenav-pages .pagination-links {
+        display: block;
+        margin-top: 5px;
+    }
+    
+    #mpg-per-page {
+        margin: 5px;
+    }
 }

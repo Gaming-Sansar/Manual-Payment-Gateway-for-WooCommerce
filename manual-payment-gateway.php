@@ -1,20 +1,16 @@
 <?php
-/**
- * Plugin Name: Manual Payment Gateway for WooCommerce
- * Plugin URI: https://github.com/gamingsansar/manual-payment-gateway
- * Description: A manual payment gateway for WooCommerce with file upload and QR code support
- * Version: 1.1.0
- * Author: Gaming Sansar
- * Author URI: https://gamingsansar.com
- * License: GPL v2 or later
- * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: manual-payment-gateway
- * Domain Path: /languages
- * Requires at least: 5.0
- * Tested up to: 6.2
- * WC requires at least: 5.0
- * WC tested up to: 7.8
- */
+/*
+Plugin Name: Manual Payment Gateway for WooCommerce
+Plugin URI: https://github.com/Gaming-Sansar/Manual-Payment-Gateway-for-WooCommerce
+Description: A WooCommerce payment gateway that allows users to upload payment screenshots for manual payment verification.
+Version: 1.1.0
+Author: Gaming Sansar
+Author URI: https://gamingsansar.com/
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: manual-payment-gateway-for-woocommerce
+*/
+
 
 // Prevent direct access
 if (!defined('ABSPATH')) {
@@ -130,7 +126,7 @@ function mpg_enqueue_scripts() {
 add_action('admin_enqueue_scripts', 'mpg_admin_enqueue_scripts');
 
 function mpg_admin_enqueue_scripts($hook) {
-    if (strpos($hook, 'wc-settings') !== false) {
+    if (strpos($hook, 'wc-settings') !== false || strpos($hook, 'mpg-payment-logs') !== false) {
         wp_enqueue_media();
         wp_enqueue_script('mpg-admin', MPG_PLUGIN_URL . 'assets/js/admin.js', array('jquery'), MPG_PLUGIN_VERSION, true);
         wp_enqueue_style('mpg-admin', MPG_PLUGIN_URL . 'assets/css/admin.css', array(), MPG_PLUGIN_VERSION);

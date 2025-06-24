@@ -9,17 +9,21 @@ if (!defined('ABSPATH')) {
 
 class MPG_Admin {
     
+    private $screen_option;
+    
     public function __construct() {
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('add_meta_boxes', array($this, 'add_order_meta_box'));
         add_action('wp_ajax_mpg_update_payment_status', array($this, 'update_payment_status'));
+        add_action('wp_ajax_mpg_save_hidden_columns', array($this, 'save_hidden_columns'));
+        add_filter('set-screen-option', array($this, 'set_screen_options'), 10, 3);
     }
     
     /**
      * Add admin menu
      */
     public function add_admin_menu() {
-        add_submenu_page(
+        $hook = add_submenu_page(
             'woocommerce',
             __('Manual Payment Logs', 'manual-payment-gateway'),
             __('Payment Logs', 'manual-payment-gateway'),
@@ -27,6 +31,113 @@ class MPG_Admin {
             'mpg-payment-logs',
             array($this, 'payment_logs_page')
         );
+        
+        // Add screen options
+        add_action("load-$hook", array($this, 'screen_option'));
+    }
+    
+    /**
+     * Screen options
+     */
+    public function screen_option() {
+        $option = 'per_page';
+        $args = [
+            'label' => __('Payment Logs per page', 'manual-payment-gateway'),
+            'default' => 50,
+            'option' => 'mpg_payment_logs_per_page'
+        ];
+        
+        add_screen_option($option, $args);
+        
+        // Add column options
+        add_filter('screen_settings', array($this, 'add_column_options'), 10, 2);
+        
+        $this->screen_option = $option;
+    }
+    
+    /**
+     * Set screen options
+     */
+    public function set_screen_options($status, $option, $value) {
+        if ('mpg_payment_logs_per_page' == $option) {
+            return $value;
+        }
+        return $status;
+    }
+    
+    /**
+     * Add column options to screen options
+     */
+    public function add_column_options($settings, $screen) {
+        if ($screen->id !== get_current_screen()->id) {
+            return $settings;
+        }
+        
+        // Get hidden columns from user meta
+        $hidden_columns = get_user_meta(get_current_user_id(), 'managempg-payment-logscolumnshidden', true);
+        if (!is_array($hidden_columns)) {
+            $hidden_columns = array();
+        }
+        
+        $columns = array(
+            'mpg_id' => __('ID', 'manual-payment-gateway'),
+            'mpg_order_id' => __('Order ID', 'manual-payment-gateway'),
+            'mpg_order_status' => __('Order Status', 'manual-payment-gateway'),
+            'mpg_transaction_id' => __('Transaction ID', 'manual-payment-gateway'),
+            'mpg_file' => __('File', 'manual-payment-gateway'),
+            'mpg_user' => __('User', 'manual-payment-gateway'),
+            'mpg_payment_status' => __('Payment Status', 'manual-payment-gateway'),
+            'mpg_date' => __('Date', 'manual-payment-gateway'),
+            'mpg_actions' => __('Actions', 'manual-payment-gateway')
+        );
+        
+        $column_options = '<fieldset><legend>' . __('Columns', 'manual-payment-gateway') . '</legend>';
+        
+        foreach ($columns as $column_key => $column_name) {
+            $checked = !in_array($column_key, $hidden_columns) ? 'checked="checked"' : '';
+            $column_options .= '<label>';
+            $column_options .= '<input type="checkbox" name="' . $column_key . '" value="' . $column_key . '" ' . $checked . '>';
+            $column_options .= ' ' . $column_name;
+            $column_options .= '</label>';
+        }
+        
+        $column_options .= '</fieldset>';
+        
+        // Add JavaScript to handle column toggles
+        $column_options .= '<script type="text/javascript">
+        jQuery(document).ready(function($) {
+            $("#screen-options-wrap input[type=checkbox]").change(function() {
+                var column = $(this).val();
+                var checked = $(this).is(":checked");
+                
+                if (checked) {
+                    $(".mpg-table ." + column).show();
+                } else {
+                    $(".mpg-table ." + column).hide();
+                }
+                
+                // Save hidden columns via AJAX
+                var hiddenColumns = [];
+                $("#screen-options-wrap input[type=checkbox]:not(:checked)").each(function() {
+                    hiddenColumns.push($(this).val());
+                });
+                
+                $.post(ajaxurl, {
+                    action: "mpg_save_hidden_columns",
+                    hidden_columns: hiddenColumns,
+                    nonce: "' . wp_create_nonce('mpg_save_columns') . '"
+                });
+            });
+            
+            // Apply hidden columns on page load
+            var hiddenColumns = ' . json_encode($hidden_columns) . ';
+            hiddenColumns.forEach(function(column) {
+                $(".mpg-table ." + column).hide();
+            });
+        });
+        </script>';
+        
+        return $settings . $column_options;
     }
     
     /**
@@ -68,8 +179,42 @@ class MPG_Admin {
             }
         }
         
-        // Get logs
-        $logs = $wpdb->get_results("SELECT * FROM $table_name ORDER BY created_at DESC");
+        // Get pagination settings
+        $user = get_current_user_id();
+        $screen = get_current_screen();
+        
+        // Check if per_page is set in URL parameter
+        if (isset($_GET['per_page']) && is_numeric($_GET['per_page'])) {
+            $per_page = intval($_GET['per_page']);
+            // Save the user preference
+            update_user_meta($user, $screen->get_option('per_page', 'option'), $per_page);
+        } else {
+            // Get from user meta or default
+            $per_page = get_user_meta($user, $screen->get_option('per_page', 'option'), true);
+            if (empty($per_page) || $per_page < 1) {
+                $per_page = $screen->get_option('per_page', 'default');
+            }
+        }
+        
+        // Ensure per_page is within valid range
+        $valid_per_page_values = array(10, 20, 50, 100, 200);
+        if (!in_array($per_page, $valid_per_page_values)) {
+            $per_page = 50; // Default fallback
+        }
+        
+        // Get current page
+        $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+        $offset = ($current_page - 1) * $per_page;
+        
+        // Get total count
+        $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+        
+        // Get logs with pagination
+        $logs = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $table_name ORDER BY created_at DESC LIMIT %d OFFSET %d",
+            $per_page,
+            $offset
+        ));
         
         ?>
         <div class="wrap">
@@ -89,88 +234,142 @@ class MPG_Admin {
                 </p>
             </div>
             
-            <table class="wp-list-table widefat fixed striped">
+            <!-- Top table navigation -->
+            <div class="tablenav top">
+                <div class="tablenav-pages">
+                    <span class="displaying-num"><?php printf(_n('%s item', '%s items', $total_items, 'manual-payment-gateway'), number_format_i18n($total_items)); ?></span>
+                    <?php if ($total_items > 0): ?>
+                        <span class="pagination-links">
+                            <label for="mpg-per-page" class="screen-reader-text"><?php _e('Number of items per page:', 'manual-payment-gateway'); ?></label>
+                            <select name="mpg-per-page" id="mpg-per-page" onchange="mpgChangePerPage(this.value)">
+                                <option value="10" <?php selected($per_page, 10); ?>>10</option>
+                                <option value="20" <?php selected($per_page, 20); ?>>20</option>
+                                <option value="50" <?php selected($per_page, 50); ?>>50</option>
+                                <option value="100" <?php selected($per_page, 100); ?>>100</option>
+                                <option value="200" <?php selected($per_page, 200); ?>>200</option>
+                            </select>
+                            <?php _e('items per page', 'manual-payment-gateway'); ?>
+                            
+                            <?php if ($total_items > $per_page): ?>
+                                <?php
+                                $total_pages = ceil($total_items / $per_page);
+                                
+                                $pagination_args = array(
+                                    'base' => add_query_arg('paged', '%#%'),
+                                    'format' => '',
+                                    'prev_text' => __('&laquo;'),
+                                    'next_text' => __('&raquo;'),
+                                    'total' => $total_pages,
+                                    'current' => $current_page
+                                );
+                                
+                                echo paginate_links($pagination_args);
+                                ?>
+                            <?php endif; ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            
+            <table class="wp-list-table widefat fixed striped mpg-table">
                 <thead>
                     <tr>
-                        <th><?php _e('ID', 'manual-payment-gateway'); ?></th>
-                        <th><?php _e('Order ID', 'manual-payment-gateway'); ?></th>
-                        <th><?php _e('Order Status', 'manual-payment-gateway'); ?></th>
-                        <th><?php _e('Transaction ID', 'manual-payment-gateway'); ?></th>
-                        <th><?php _e('File', 'manual-payment-gateway'); ?></th>
-                        <th><?php _e('User', 'manual-payment-gateway'); ?></th>
-                        <th><?php _e('Payment Status', 'manual-payment-gateway'); ?></th>
-                        <th><?php _e('Date', 'manual-payment-gateway'); ?></th>
-                        <th><?php _e('Actions', 'manual-payment-gateway'); ?></th>
+                        <th class="mpg_id"><?php _e('ID', 'manual-payment-gateway'); ?></th>
+                        <th class="mpg_order_id"><?php _e('Order ID', 'manual-payment-gateway'); ?></th>
+                        <th class="mpg_order_status"><?php _e('Order Status', 'manual-payment-gateway'); ?></th>
+                        <th class="mpg_transaction_id"><?php _e('Transaction ID', 'manual-payment-gateway'); ?></th>
+                        <th class="mpg_file"><?php _e('File', 'manual-payment-gateway'); ?></th>
+                        <th class="mpg_user"><?php _e('User', 'manual-payment-gateway'); ?></th>
+                        <th class="mpg_payment_status"><?php _e('Payment Status', 'manual-payment-gateway'); ?></th>
+                        <th class="mpg_date"><?php _e('Date', 'manual-payment-gateway'); ?></th>
+                        <th class="mpg_actions"><?php _e('Actions', 'manual-payment-gateway'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($logs as $log): ?>
-                    <?php 
-                    $order = wc_get_order($log->order_id);
-                    $order_status = $order ? $order->get_status() : 'unknown';
-                    $order_status_name = $order ? wc_get_order_status_name($order_status) : __('Unknown', 'manual-payment-gateway');
-                    ?>
-                    <tr>
-                        <td><?php echo $log->id; ?></td>
-                        <td>
-                            <a href="<?php echo admin_url('post.php?post=' . $log->order_id . '&action=edit'); ?>">
-                                #<?php echo $log->order_id; ?>
-                            </a>
-                        </td>
-                        <td>
-                            <span class="order-status-<?php echo esc_attr($order_status); ?>">
-                                <?php echo esc_html($order_status_name); ?>
-                            </span>
-                        </td>
-                        <td><?php echo esc_html($log->transaction_id); ?></td>
-                        <td>
-                            <?php if ($log->file_path): ?>
-                                <a href="<?php echo esc_url($log->file_path); ?>" target="_blank">
-                                    <?php echo esc_html($log->file_name); ?>
+                    <?php if (empty($logs)): ?>
+                        <tr>
+                            <td colspan="9"><?php _e('No payment logs found.', 'manual-payment-gateway'); ?></td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($logs as $log): ?>
+                        <?php 
+                        $order = wc_get_order($log->order_id);
+                        $order_status = $order ? $order->get_status() : 'unknown';
+                        $order_status_name = $order ? wc_get_order_status_name($order_status) : __('Unknown', 'manual-payment-gateway');
+                        ?>
+                        <tr>
+                            <td class="mpg_id"><?php echo $log->id; ?></td>
+                            <td class="mpg_order_id">
+                                <a href="<?php echo admin_url('post.php?post=' . $log->order_id . '&action=edit'); ?>">
+                                    #<?php echo $log->order_id; ?>
                                 </a>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php 
-                            $user = get_user_by('id', $log->user_id);
-                            echo $user ? esc_html($user->display_name) : __('Guest', 'manual-payment-gateway');
-                            ?>
-                        </td>
-                        <td>
-                            <span class="status-<?php echo esc_attr($log->status); ?>">
-                                <?php echo ucfirst(esc_html($log->status)); ?>
-                            </span>
-                        </td>
-                        <td><?php echo date('Y-m-d H:i:s', strtotime($log->created_at)); ?></td>
-                        <td>
-                            <form method="post" style="display: inline;">
-                                <?php wp_nonce_field('mpg_update_status', 'mpg_nonce'); ?>
-                                <input type="hidden" name="log_id" value="<?php echo $log->id; ?>" />
-                                <select name="new_status">
-                                    <option value="pending" <?php selected($log->status, 'pending'); ?>>Pending</option>
-                                    <option value="approved" <?php selected($log->status, 'approved'); ?>>Approved</option>
-                                    <option value="rejected" <?php selected($log->status, 'rejected'); ?>>Rejected</option>
-                                </select>
-                                <input type="submit" name="update_status" value="Update" class="button button-small" />
-                            </form>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
+                            </td>
+                            <td class="mpg_order_status">
+                                <span class="order-status-<?php echo esc_attr($order_status); ?>">
+                                    <?php echo esc_html($order_status_name); ?>
+                                </span>
+                            </td>
+                            <td class="mpg_transaction_id"><?php echo esc_html($log->transaction_id); ?></td>
+                            <td class="mpg_file">
+                                <?php if ($log->file_path): ?>
+                                    <a href="<?php echo esc_url($log->file_path); ?>" target="_blank">
+                                        <?php echo esc_html($log->file_name); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </td>
+                            <td class="mpg_user">
+                                <?php 
+                                $user_data = get_user_by('id', $log->user_id);
+                                echo $user_data ? esc_html($user_data->display_name) : __('Guest', 'manual-payment-gateway');
+                                ?>
+                            </td>
+                            <td class="mpg_payment_status">
+                                <span class="status-<?php echo esc_attr($log->status); ?>">
+                                    <?php echo ucfirst(esc_html($log->status)); ?>
+                                </span>
+                            </td>
+                            <td class="mpg_date"><?php echo date('Y-m-d H:i:s', strtotime($log->created_at)); ?></td>
+                            <td class="mpg_actions">
+                                <form method="post" style="display: inline;">
+                                    <?php wp_nonce_field('mpg_update_status', 'mpg_nonce'); ?>
+                                    <input type="hidden" name="log_id" value="<?php echo $log->id; ?>" />
+                                    <select name="new_status">
+                                        <option value="pending" <?php selected($log->status, 'pending'); ?>>Pending</option>
+                                        <option value="approved" <?php selected($log->status, 'approved'); ?>>Approved</option>
+                                        <option value="rejected" <?php selected($log->status, 'rejected'); ?>>Rejected</option>
+                                    </select>
+                                    <input type="submit" name="update_status" value="Update" class="button button-small" />
+                                </form>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
+            
+            <?php if ($total_items > $per_page): ?>
+            <!-- Bottom table navigation -->
+            <div class="tablenav bottom">
+                <div class="tablenav-pages">
+                    <span class="displaying-num"><?php printf(_n('%s item', '%s items', $total_items, 'manual-payment-gateway'), number_format_i18n($total_items)); ?></span>
+                    <?php
+                    $total_pages = ceil($total_items / $per_page);
+                    
+                    $pagination_args = array(
+                        'base' => add_query_arg('paged', '%#%'),
+                        'format' => '',
+                        'prev_text' => __('&laquo;'),
+                        'next_text' => __('&raquo;'),
+                        'total' => $total_pages,
+                        'current' => $current_page
+                    );
+                    
+                    echo paginate_links($pagination_args);
+                    ?>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
-        
-        <style>
-        .status-pending { color: #ff9500; }
-        .status-approved { color: #46b450; }
-        .status-rejected { color: #dc3232; }
-        .order-status-on-hold { color: #ff9500; font-weight: bold; }
-        .order-status-processing { color: #46b450; font-weight: bold; }
-        .order-status-completed { color: #46b450; font-weight: bold; }
-        .order-status-cancelled { color: #dc3232; font-weight: bold; }
-        .order-status-failed { color: #dc3232; font-weight: bold; }
-        .order-status-pending { color: #ff9500; font-weight: bold; }
-        </style>
         <?php
     }
     
@@ -349,5 +548,41 @@ class MPG_Admin {
         }
         
         return true;
+    }
+    
+    /**
+     * Save hidden columns via AJAX
+     */
+    public function save_hidden_columns() {
+        check_ajax_referer('mpg_save_columns', 'nonce');
+        
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('You do not have sufficient permissions.', 'manual-payment-gateway'));
+        }
+        
+        $hidden_columns = isset($_POST['hidden_columns']) ? array_map('sanitize_text_field', $_POST['hidden_columns']) : array();
+        
+        update_user_meta(get_current_user_id(), 'managempg-payment-logscolumnshidden', $hidden_columns);
+        
+        wp_send_json_success();
+    }
+}
+
+// Add JavaScript for per-page functionality
+add_action('admin_footer', 'mpg_admin_footer_script');
+
+function mpg_admin_footer_script() {
+    $screen = get_current_screen();
+    if ($screen && strpos($screen->id, 'mpg-payment-logs') !== false) {
+        ?>
+        <script type="text/javascript">
+        function mpgChangePerPage(perPage) {
+            var url = new URL(window.location);
+            url.searchParams.set('per_page', perPage);
+            url.searchParams.delete('paged'); // Reset to first page
+            window.location.href = url.toString();
+        }
+        </script>
+        <?php
     }
 }
